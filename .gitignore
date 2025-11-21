@@ -1,0 +1,17 @@
+### IntelliJ ###
+.idea/
+*.iml
+workspace.xml
+shelf/
+httpRequests/
+
+### Build ###
+/build/
+/out/
+
+### Logs ###
+*.log
+
+### OS ###
+.DS_Store
+Thumbs.db
