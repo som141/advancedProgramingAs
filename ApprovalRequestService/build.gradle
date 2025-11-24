@@ -1,0 +1,100 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+    // proto 컴파일용 Gradle 플러그인 (공식 최신 0.9.5 기준)
+    // https://github.com/google/protobuf-gradle-plugin :contentReference[oaicite:0]{index=0}
+    id 'com.google.protobuf' version '0.9.5'
+}
+
+group = 'study'
+version = '0.0.1-SNAPSHOT'
+description = 'ApprovalRequestService'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+// ====== 버전 변수 정의 ======
+ext {
+    // grpc-spring-boot-starter 3.x는 기본적으로 gRPC 1.58.0 계열을 사용 :contentReference[oaicite:1]{index=1}
+    grpcVersion = '1.75.0'
+    // protobuf-java 3.x 안정 버전 (3.25.x 계열) :contentReference[oaicite:2]{index=2}
+    protobufVersion = '4.28.2'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // --- Spring ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+    // Thymeleaf는 화면 안 쓰면 빼도 되는데, 필요하면 유지
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // --- Lombok ---
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // --- gRPC + Protobuf ---
+    implementation 'net.devh:grpc-spring-boot-starter:3.1.0.RELEASE'  // Spring Boot 3.2.4 기준, 4.0도 대부분 호환 :contentReference[oaicite:3]{index=3}
+
+    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
+    implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+    implementation "io.grpc:grpc-stub:${grpcVersion}"
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+
+    // --- Test ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // Mongo, Web, Validation 테스트 전부 여기 하나로 커버 가능 (@DataMongoTest, @WebMvcTest 등)
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+protobuf {
+    // 모든 생성 파일을 이 위치에 두게 함
+    generatedFilesBaseDir = "$projectDir/build/generated"
+
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+        }
+    }
+    generateProtoTasks {
+        all().configureEach { task ->
+            task.plugins {
+                grpc {}
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            // proto 메시지용 자바
+            srcDirs += "$projectDir/build/generated/source/proto/main/java"
+            // gRPC 스텁용 자바
+            srcDirs += "$projectDir/build/generated/source/proto/main/grpc"
+        }
+    }
+}

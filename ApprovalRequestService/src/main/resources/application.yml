@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: approval-request-service
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/erp_approval
+
+employee-service:
+  base-url: http://localhost:8080
+
+grpc:
+  approval-processing:
+    host: localhost
+    port: 50051

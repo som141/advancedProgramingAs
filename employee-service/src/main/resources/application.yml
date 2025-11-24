@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: employee-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/employdb?useSSL=false&serverTimezone=Asia/Seoul
+    username: root
+    password: 123qazasd!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
