@@ -119,6 +119,73 @@ Windows PowerShell에서는 `./gradlew` 대신 `.\gradlew.bat` 사용.
    - 마지막 승인이라면 최종 승인 후 알림 전송  
 5) notification-service가 requester의 WebSocket 세션에 최종 결과를 push 합니다.
 
+## 전체 아키텍처 (Mermaid)
+```mermaid
+flowchart LR
+    subgraph Client
+        R[Requester\n(REST /approvals)]
+        A[Approver\n(REST /process)]
+        WS[Requester WebSocket\n/ws?id={id}]
+    end
+
+    subgraph Notification
+        NS[notification-service\n8080]
+    end
+
+    subgraph ApprovalRequest
+        AR[ApprovalRequestService\n8082 / gRPC 50051]
+        Mongo[(MongoDB\nerp_approval)]
+    end
+
+    subgraph ApprovalProcessing
+        AP[ApprovalProcessingService\n8083 / gRPC 50052]
+    end
+
+    subgraph Employee
+        ES[employee-service\n8081]
+        MySQL[(MySQL\nemploydb)]
+    end
+
+    R -->|REST POST/GET| AR
+    AR -->|직원 검증| ES
+    ES --> MySQL
+    AR --> Mongo
+
+    AR <-->|gRPC RequestApproval / ReturnApprovalResult| AP
+
+    A -->|GET/POST /process| AP
+
+    AR -->|HTTP POST /notify/final| NS
+    NS -->|WebSocket push| WS
+```
+
+## 승인 흐름 시퀀스 (Mermaid)
+```mermaid
+sequenceDiagram
+    participant Req as 요청자
+    participant AR as ApprovalRequestService
+    participant ES as employee-service
+    participant AP as ApprovalProcessingService
+    participant App as 결재자
+    participant NS as notification-service
+    participant WS as WebSocket(요청자)
+
+    Req->>AR: POST /approvals (제목, 내용, steps)
+    AR->>ES: GET /api/employees/{id} (요청자/승인자 검증)
+    AR->>AP: gRPC RequestApproval (requestId, steps)
+    AP-->>App: GET /process/{approverId} (대기열 조회)
+    App-->>AP: POST /process/{approverId}/{requestId} status=approved/rejected
+    AP->>AR: gRPC ReturnApprovalResult(status, step)
+    alt rejected
+        AR->>NS: POST /notify/final (rejected, rejectedBy)
+    else approved & 다음 단계 있음
+        AR->>AP: gRPC RequestApproval (다음 결재자)
+    else 최종 승인
+        AR->>NS: POST /notify/final (approved)
+    end
+    NS-->>WS: WebSocket push 최종 결과
+```
+
 ## 트러블슈팅/팁
 - 포트/호스트를 변경하려면 각 서비스의 `src/main/resources/application.yml`을 확인하세요.
 - employee-service는 `ddl-auto: validate`이므로 테이블이 없으면 실행이 실패합니다. 위 SQL로 테이블을 만들어 주세요.
