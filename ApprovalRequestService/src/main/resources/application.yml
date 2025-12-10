@@ -12,6 +12,8 @@ spring:
 employee-service:
   base-url: http://localhost:8081/api
 
+notification-service:
+  base-url: http://localhost:8080
 grpc:
   server:
     port: 50051

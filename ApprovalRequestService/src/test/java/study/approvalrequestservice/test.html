@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>WS Test</title>
+</head>
+<body>
+<h1>WebSocket Test</h1>
+
+<script>
+    // employeeId = 1 예시
+    const ws = new WebSocket("ws://localhost:8080/ws?id=1");
+
+    ws.onopen = () => {
+        console.log("WS OPEN");
+    };
+
+    ws.onmessage = (e) => {
+        console.log("RECV:", e.data);
+    };
+
+    ws.onclose = () => {
+        console.log("WS CLOSED");
+    };
+
+    ws.onerror = (e) => {
+        console.error("WS ERROR:", e);
+    };
+</script>
+</body>
+</html>
