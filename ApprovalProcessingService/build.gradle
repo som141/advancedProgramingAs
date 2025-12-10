@@ -1,0 +1,79 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.0.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.google.protobuf' version '0.9.5'
+}
+
+
+group = 'study'
+version = '0.0.1-SNAPSHOT'
+description = 'ApprovalProcessingService'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+ext {
+	// 너가 쓰던 버전 그대로 사용
+	grpcVersion = '1.75.0'
+	protobufVersion = '4.28.2'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// --- Spring ---
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+	// --- Lombok ---
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// --- gRPC + Protobuf ---
+	implementation 'net.devh:grpc-spring-boot-starter:3.1.0.RELEASE'
+
+	implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
+	implementation "io.grpc:grpc-netty-shaded:${grpcVersion}"
+	implementation "io.grpc:grpc-protobuf:${grpcVersion}"
+	implementation "io.grpc:grpc-stub:${grpcVersion}"
+	compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+
+	// --- Test ---
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+/**
+ * Protobuf / gRPC 코드 생성 설정
+ * 기본 outDir:
+ *  - build/generated/sources/proto/main/java
+ *  - build/generated/sources/proto/main/grpc
+ */
+protobuf {
+	protoc {
+		artifact = "com.google.protobuf:protoc:${protobufVersion}"
+	}
+	plugins {
+		grpc {
+			artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+		}
+	}
+	generateProtoTasks {
+		all().configureEach { task ->
+			task.plugins {
+				grpc {}
+			}
+		}
+	}
+}

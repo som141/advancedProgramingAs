@@ -1,0 +1,16 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: approval-processing-service
+
+grpc:
+  # ??? RequestApproval ?? gRPC ??
+  server:
+    port: 50052
+
+  # ??? ReturnApprovalResult ?? (Request Service)
+  approval-request:
+    host: localhost
+    port: 50051
