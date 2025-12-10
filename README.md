@@ -122,41 +122,40 @@ Windows PowerShell에서는 `./gradlew` 대신 `.\gradlew.bat` 사용.
 ## 전체 아키텍처 (Mermaid)
 ```mermaid
 flowchart LR
-    subgraph Client
-        R[Requester\n(REST /approvals)]
-        A[Approver\n(REST /process)]
-        WS[Requester WebSocket\n/ws?id={id}]
-    end
+  subgraph Client
+    R["Requester\nREST /approvals"]
+    A["Approver\nREST /process"]
+    WS["Requester WebSocket\n/ws?id={id}"]
+  end
 
-    subgraph Notification
-        NS[notification-service\n8080]
-    end
+  subgraph Notification
+    NS["notification-service\n8080"]
+  end
 
-    subgraph ApprovalRequest
-        AR[ApprovalRequestService\n8082 / gRPC 50051]
-        Mongo[(MongoDB\nerp_approval)]
-    end
+  subgraph ApprovalRequest
+    AR["ApprovalRequestService\n8082 / gRPC 50051"]
+    Mongo[("MongoDB\nemp_approval")]
+  end
 
-    subgraph ApprovalProcessing
-        AP[ApprovalProcessingService\n8083 / gRPC 50052]
-    end
+  subgraph ApprovalProcessing
+    AP["ApprovalProcessingService\n8083 / gRPC 50052"]
+  end
 
-    subgraph Employee
-        ES[employee-service\n8081]
-        MySQL[(MySQL\nemploydb)]
-    end
+  subgraph Employee
+    ES["employee-service\n8081"]
+    MySQL[("MySQL\nemp_db")]
+  end
 
-    R -->|REST POST/GET| AR
-    AR -->|직원 검증| ES
-    ES --> MySQL
-    AR --> Mongo
+  R -->|REST POST/GET| AR
+  AR -->|직원 검색| ES
+  ES --> MySQL
+  AR --> Mongo
 
-    AR <-->|gRPC RequestApproval / ReturnApprovalResult| AP
+  AR -->|gRPC RequestApproval / ReturnApprovalResult| AP
+  A -->|GET/POST /process| AP
+  AR -->|HTTP POST /notify/final| NS
+  NS -->|WebSocket push| WS
 
-    A -->|GET/POST /process| AP
-
-    AR -->|HTTP POST /notify/final| NS
-    NS -->|WebSocket push| WS
 ```
 
 ## 승인 흐름 시퀀스 (Mermaid)
